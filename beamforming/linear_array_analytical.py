@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import time
 
 
-theta = math.radians(100)
+theta = math.radians(160)
 # wavelength for 5.8 GHz in cm
 lmbda = 5.168835482759
 k = 2 * math.pi / lmbda
