@@ -1,6 +1,7 @@
 import cmath
 import math
 import matplotlib.pyplot as plt
+import time
 
 lmbda = 5.168835482759
 # k = 2 * math.pi / lmbda
@@ -8,25 +9,30 @@ d = lmbda / 2
 M = 56
 N = M * 2 + 1
 k = 2 * math.pi / lmbda
-theta_deg = 100
-theta = math.radians(theta_deg)
+targets = [100, 160, 70, 50]
+T = len(targets)
+# theta_deg = 100
+# theta = math.radians(theta_deg)
 theta_n = [0] * N
 x_n = [0] * N
 AF = [0] * N
 
+# # example settings: time 0.699464797974
+# def func (x):
+#     global targets
+#     max_y = 0
+#     for t in targets:
+#         temp = (1/(math.sqrt(0.00018) * math.sqrt(2 * math.pi)))*math.exp((-2)*((x - t)/math.sqrt(0.5))**2)
+#         max_y = max(temp, max_y)
+#     return max_y
 
+# example settings: time = 0.715882062912
 def func (x):
-    global theta_deg
-    y1 = (1/(math.sqrt(0.00018) * math.sqrt(2 * math.pi)))*math.exp((-2)*((x - theta_deg)/math.sqrt(0.5))**2)
-    # y1 = 0
-    y2 = (1/(math.sqrt(0.00018) * math.sqrt(2 * math.pi)))*math.exp((-2)*((x - 160)/math.sqrt(0.5))**2)
-
-    y3 = (1/(math.sqrt(0.00018) * math.sqrt(2 * math.pi)))*math.exp((-2)*((x - 70)/math.sqrt(0.5))**2)
-
-    y4 = (1/(math.sqrt(0.00018) * math.sqrt(2 * math.pi)))*math.exp((-2)*((x - 50)/math.sqrt(0.5))**2)
-    return max(y1, y2, y3, y4)
-
-
+    global targets, T
+    f_i = [0] * T
+    for i in range(T):
+        f_i[i] = (1/(math.sqrt(0.00018) * math.sqrt(2 * math.pi)))*math.exp((-2)*((x - targets[i])/math.sqrt(0.5))**2)
+    return max(f_i)
 
 def sample_angles():
     global lmbda, N, d , theta_n, M
@@ -49,6 +55,8 @@ def get_array_factor (theta, I_0, I_n):
 
 def main():
     global theta_n, x_n, N, M, AF
+
+    t = time.time()
     sample_curve()
     print len(theta_n)
 
@@ -75,8 +83,10 @@ def main():
         y1[i] = abs(get_array_factor(math.radians(i), X_k[0], X_k))
 
     plt.plot(x1, y1, color = 'blue')
-
+    t2 = time.time()
+    print (t2 - t)
     plt.show()
+
 
 
 if __name__ == '__main__':
