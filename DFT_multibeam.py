@@ -9,7 +9,7 @@ d = lmbda / 2
 M = 56
 N = M * 2 + 1
 k = 2 * math.pi / lmbda
-targets = [100, 160, 70, 50]
+targets = [50, 70, 100, 160]
 T = len(targets)
 # theta_deg = 100
 # theta = math.radians(theta_deg)
@@ -39,12 +39,46 @@ def sample_angles():
     for n in range((-1 * M), M):
         theta_n[n+M] = math.degrees(math.acos((n*lmbda)/(N*d)))
 
+# def sample_curve():
+#     global theta_n, x_n, M, lmbda, N, d, AF
+#     for n in range((-1 * M), M):
+#         theta_n[n+M] = math.degrees(math.acos((n*lmbda)/(N*d)))
+#         AF[n+M] = abs(func(theta_n[n+M]))
+#         x_n[n+M] = func(theta_n[n+M])
+
+def set_output(i):
+    global x_n, AF
+    print theta_n[i]
+    AF[i-1] = max(AF[i-1], M * 0)
+    AF[i] = 2*M
+    AF[i+1] = M/4 * 0
+    x_n[i-1] = max(x_n[i-1], M * 0)
+    x_n[i] = 2*M
+    x_n[i+1] = M/4 * 0
+
+def peak_approximator():
+    global targets, T, theta_n, M, N, x_n
+    curr_t = T-1
+    i = 0
+    last_d = float("inf")
+    print(len(theta_n))
+    print(N)
+    while curr_t >= 0:
+        curr_d = targets[curr_t] - theta_n[i]
+        # print(targets[curr_t], theta_n[i])
+        if curr_d > 0:
+            if curr_d < abs(last_d):
+                set_output(i)
+            else:
+                set_output(i-1)
+            curr_t -= 1
+            last_d = float("inf")
+        last_d = curr_d
+        i += 1
+
 def sample_curve():
-    global theta_n, x_n, M, lmbda, N, d, AF
-    for n in range((-1 * M), M):
-        theta_n[n+M] = math.degrees(math.acos((n*lmbda)/(N*d)))
-        AF[n+M] = abs(func(theta_n[n+M]))
-        x_n[n+M] = func(theta_n[n+M])/N
+    sample_angles()
+    peak_approximator()
 
 def get_array_factor (theta, I_0, I_n):
     global M, d, k
@@ -66,17 +100,17 @@ def main():
         for n in range(N):
             sum += x_n[n] * cmath.exp((-2 * cmath.pi * 1j * (n-M) * k)/N)
         X_k[k] = sum
-    print X_k
+    # print X_k
 
     x = [i for i in range(0,181)]
     y = [0] * 181
     for i in x:
         y[i] = abs(func(i))
 
-    # plt.plot(x, y, color='green')
-    plt.plot(theta_n, AF, color = 'red', marker = "o")
+    # plt.plot(x, y, color='yellow')
+    # plt.plot(theta_n, AF, color = 'red', marker = "o")
     theta_n.reverse()
-    print theta_n
+    # print theta_n
     x1 = [i for i in range(181)]
     y1 = [0] * 181
     for i in x1:
