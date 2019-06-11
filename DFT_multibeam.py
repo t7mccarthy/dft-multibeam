@@ -6,10 +6,10 @@ import time
 lmbda = 5.168835482759
 # k = 2 * math.pi / lmbda
 d = lmbda / 2
-M = 56
+M =100
 N = M * 2 + 1
 k = 2 * math.pi / lmbda
-targets = [50, 70, 100, 160]
+targets = [25, 50, 65, 70, 100, 125, 160]
 T = len(targets)
 # theta_deg = 100
 # theta = math.radians(theta_deg)
@@ -47,14 +47,14 @@ def sample_angles():
 #         x_n[n+M] = func(theta_n[n+M])
 
 def set_output(i):
-    global x_n, AF
+    global x_n, AF, T
     print theta_n[i]
-    AF[i-1] = max(AF[i-1], M * 0)
-    AF[i] = 2*M
-    AF[i+1] = M/4 * 0
-    x_n[i-1] = max(x_n[i-1], M * 0)
-    x_n[i] = 2*M
-    x_n[i+1] = M/4 * 0
+    # AF[i-1] = max(AF[i-1], M * 0)
+    AF[i] = 2*M/T
+    # AF[i+1] = M/4 * 0
+    # x_n[i-1] = max(x_n[i-1], M * 0)
+    x_n[i] = 2*M/T
+    # x_n[i+1] = M/4 * 0
 
 def peak_approximator():
     global targets, T, theta_n, M, N, x_n
@@ -108,7 +108,7 @@ def main():
         y[i] = abs(func(i))
 
     # plt.plot(x, y, color='yellow')
-    # plt.plot(theta_n, AF, color = 'red', marker = "o")
+    plt.plot(theta_n, AF, color = 'red', marker = "o")
     theta_n.reverse()
     # print theta_n
     x1 = [i for i in range(181)]
