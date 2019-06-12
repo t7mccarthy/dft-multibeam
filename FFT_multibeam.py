@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 from tabulate import tabulate
 import time
 
-N = 16
+N = 1000
 M = N * 2 + 1
 lmbda = 5.168835482759
 d = lmbda / 2
@@ -16,6 +16,8 @@ x_n = [0] * M
 X_k = [0] * M
 closest = [0] * T
 show = True
+
+coeffs = [0] * M
 
 # find set of angles possible to use in Fourier transform
 def sample_angles():
@@ -41,20 +43,37 @@ def peak_approximator():
         last_d = curr_d
         i += 1
 
+def get_coeffs():
+    k1 = cmath.exp(2 * cmath.pi * 1j * N / M)
+    result = 1 + 0j
+    for i in range(1, M):
+        result *= k1
+        coeffs[i] = result
+
 # run discrete Fourier transform to get phases/amplitudes for approximating target function
 def dft():
+    # x_n2 = [0] * M
+    # for n in range(M):
+    #     x_n2[n] = x_n[n] * cmath.exp(2 * cmath.pi * 1j * N / M)
+    coeffs[0] = 1 + 0j
+    # get_coeffs()
+    for i in range(M):
+        coeffs[i] = cmath.exp(2 * cmath.pi * 1j * N * i / M)
+    print coeffs
+
     for k in range(M):
+        c = cmath.exp(2 * cmath.pi * 1j * N * k / M)
         sum = 0
         for n in range(M):
-            sum += x_n[n] * cmath.exp(-2 * cmath.pi * 1j * (n - N) * k / M)
-        X_k[k] = sum
+            sum += x_n[n] * cmath.exp(-2 * cmath.pi * 1j * (n) * k / M)
+        X_k[k] = sum * c
 
 
 # get array factor at given angle using known equation and generated phases/amplitudes
 def get_array_factor (theta):
     sum = 0
     for n in range(M):
-        sum += (X_k[n] / X_k[0]) * cmath.exp(1j * (n-N) * wave_num * d * math.cos(theta))
+        sum += (X_k[n] / X_k[0]) * cmath.exp(1j * (n) * wave_num * d * math.cos(theta))
     return sum
 
 # plot array factor function resulting from DFT
