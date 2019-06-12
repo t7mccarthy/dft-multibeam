@@ -49,6 +49,7 @@ def dft():
             sum += x_n[n] * cmath.exp(-2 * cmath.pi * 1j * (n - N) * k / M)
         X_k[k] = sum
 
+
 # get array factor at given angle using known equation and generated phases/amplitudes
 def get_array_factor (theta):
     sum = 0
@@ -61,11 +62,10 @@ def visualize ():
     if show:
         plt.plot(theta_n, x_n, color = 'red', marker = 'o', label = 'Target')
 
-        x1 = [i for i in range(181)]
-        y1 = [0] * 181
-        for i in x1:
-            y1[i] = abs(get_array_factor(math.radians(i)))
-        plt.plot(x1, y1, color = 'blue', label = 'Result')
+        y = [0] * 181
+        for i in range(181):
+            y[i] = abs(get_array_factor(math.radians(i)))
+        plt.plot(range(181), y, color = 'blue', label = 'Result')
 
         for target in targets:
             plt.axvline(x=target, color = 'red')
@@ -78,7 +78,7 @@ def visualize ():
 
 
 def main():
-    print ('\nRUNNING DFT MULTIBEAM GENERATOR...')
+    print ('\nRUNNING DFT MULTIBEAM GENERATOR...\n')
 
     t = time.time()
     sample_angles()
@@ -87,17 +87,32 @@ def main():
 
     runtime = time.time() - t
 
+    # Calculate phase and amplitude of each antenna based on X_k signal
+    amplitudes = [0] * M
+    phases = [0] * M
+    for i in range(M):
+        x = X_k[i].real
+        y = X_k[i].imag
+        phase = math.atan2(y, x)
+        phases[i] = math.degrees(phase)
+        amplitudes[i] = x / math.cos(phase)
+
+    # output antenna configurations
+    print ('\n' + '\033[1m' + 'Required Antenna Configurations:' + '\033[0m\n')
+    array_config = zip(*[[x + 1 for x in range(M)], amplitudes, phases])
+    print (tabulate(array_config, headers=['Antenna #', 'Amplitude', 'Phase'], tablefmt='orgtbl') + '\n')
+
     # get array factor at each target angle
     target_results = []
     for target in targets:
         target_results.append(abs(get_array_factor(math.radians(target))))
 
     # output results
-    print ('\n' + '\033[1m' + 'Results with ' + str(M) + ' antennas and ' + str(T) + ' targets:' + '\033[0m')
+    print ('\n\033[1m Resulting Beamform:\033[0m\n')
     print ('--- Best uniform peak array factor: ' + str(2*N/T))
     print ('--- Runtime: ' + str(runtime) + '\n')
-    results = zip(*[targets, closest, target_results])
-    print (tabulate(results, headers=['Target', 'Closest Sample', 'Array Factor'], tablefmt='orgtbl') + '\n')
+    results = zip(*[[x + 1 for x in range(T)], targets, closest, target_results])
+    print (tabulate(results, headers=['Target #', 'Target Angle', 'Closest Sample', 'Array Factor'], tablefmt='orgtbl') + '\n')
     diffs = [abs(targets[i] - closest[i]) for i in range(T)]
     print ('--- Mean difference target vs. closest: ' + str(sum(diffs)/T))
     print ('--- Max difference target vs. closest: ' + str(max(diffs)))
