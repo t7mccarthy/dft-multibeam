@@ -5,7 +5,7 @@ import numpy as np
 from tabulate import tabulate
 import time
 
-N = 100000
+N = 16
 M = N * 2 + 1
 lmbda = 5.168835482759
 d = lmbda / 2
