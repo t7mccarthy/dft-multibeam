@@ -44,7 +44,6 @@ def peak_approximator():
 
 # run discrete Fourier transform to get phases/amplitudes for approximating target function
 def dft():
-
     for k in range(M):
         sum = 0
         for n in range(M):
@@ -54,13 +53,12 @@ def dft():
     for k in range(M):
         X_k[k] = X_k[k] * cmath.exp(2 * cmath.pi * 1j * N * k / M)
 
-
+# run fast Fourier transform to get phases/amplitudes for approximating target function
 def dft_fast():
-    x = np.array(x_n)
-    X = (np.fft.fft(x)).tolist()
-
+    X = (np.fft.fft(np.array(x_n))).tolist()
+    k1 = cmath.exp(2 * cmath.pi * 1j * N / M)
     for k in range(M):
-        X_k[k] = X[k] * cmath.exp(2 * cmath.pi * 1j * N * k / M)
+        X_k[k] = X[k] * (k1 ** k)
 
 # get array factor at given angle using known equation and generated phases/amplitudes
 def get_array_factor (theta):
@@ -95,7 +93,7 @@ def main():
     t = time.time()
     sample_angles()
     peak_approximator()
-    dft()
+    dft_fast()
 
     runtime = time.time() - t
 
@@ -122,7 +120,7 @@ def main():
     # output results
     print ('\n\033[1m Resulting Beamform:\033[0m\n')
     print ('--- Best uniform peak array factor: ' + str(2*N/T))
-    print ('--- Runtime: ' + str(runtime) + '\n')
+    print ('--- Runtime: ' + str(runtime) + ' seconds\n')
     results = zip(*[[x + 1 for x in range(T)], targets, closest, target_results])
     print (tabulate(results, headers=['Target #', 'Target Angle', 'Closest Sample', 'Array Factor'], tablefmt='orgtbl') + '\n')
     diffs = [abs(targets[i] - closest[i]) for i in range(T)]
