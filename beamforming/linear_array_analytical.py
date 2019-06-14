@@ -29,14 +29,14 @@ def main():
     result = [i * analytical for i in range(0, 2 * n + 1)]
     elapsed = time.time() - t
 
-    print analytical
-    print opt_val
-    print result
+    print (analytical)
+    print (opt_val)
+    print (result)
     print ("time " + str(elapsed))
     #
     # rounded = 1.07448
     # rounded_val = abs(get_array_factor(k, d, theta, n, rounded))
-    # print rounded_val
+    # print (rounded_val)
 
     x = [i for i in range(0,181)]
     y = [0] * 181

@@ -9,7 +9,7 @@ import mpl_toolkits.mplot3d.axes3d as axes3d
 import time
 
 
-theta = math.radians(130)
+theta = math.radians(30)
 phi = math.radians(30)
 # wavelength for 5.8 GHz in cm
 lmbda = 5.168835482759
@@ -21,7 +21,7 @@ n = 8
 def get_array_factor (k, dx, dy, theta, phi, n, ax, ay):
     sum1 = 0
     sum2 = 0
-    # print theta
+    # print (theta)
     a = math.sin(theta)
     for i in range(-n, n):
         sum1 += cmath.exp(1j*i*(k*dx*math.sin(theta)*math.cos(phi)-ax))
@@ -39,11 +39,11 @@ def main():
 
     alphax = k * dx * math.sin(theta) * math.cos(phi)
     alphay = k * dy * math.sin(theta) * math.sin(phi)
-    print "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
-    print alphay
+    print ("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+    print (alphay)
     alphay = abs(k * dy * cmath.sqrt((alphax/(k * dx))**2 - math.sin(theta)**2))
-    print alphay
-    print "&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&"
+    print (alphay)
+    print ("&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&")
     opt_val = get_array_factor(k, dx, dy, theta, phi, n, alphax, alphay)
 
     resultx = [i * alphax for i in range(2 * n + 1)]
@@ -54,10 +54,10 @@ def main():
             result[i][j] = resultx[i] + resulty[j]
 
 
-    print alphax
-    print alphay
-    print opt_val
-    print result
+    print (alphax)
+    print (alphay)
+    print (opt_val)
+    print (result)
 
     f2 = np.vectorize(fun)
     dim = 100
@@ -67,16 +67,16 @@ def main():
     for i in range(dim):
         for j in range(dim):
             # print("*******************************************************")
-            # print math.degrees(THETA[i][j]), math.degrees(PHI[i][j])
+            # print (math.degrees(THETA[i][j]), math.degrees(PHI[i][j]))
             r[i][j]=fun(THETA[i][j], PHI[i][j], k, dx, dy, n, alphax, alphay)
-            # print math.degrees(r[i][j])
+            # print (math.degrees(r[i][j]))
     R = np.array(r)
-    print np.shape(THETA)
-    print np.shape(PHI)
+    print (np.shape(THETA))
+    print (np.shape(PHI))
     # R = np.cos(PHI**2)
     # R = f2(THETA, PHI, k, dx, dy, n, alphax, alphay)
-    print np.shape(R)
-    print(R)
+    print (np.shape(R))
+    print (R)
     X = R * np.sin(PHI) * np.cos(THETA)
     Y = R * np.sin(PHI) * np.sin(THETA)
     Z = R * np.cos(PHI)
@@ -115,7 +115,7 @@ def main():
     # theta = np.arange(0,math.pi,math.pi/100)
     #
     # for a in theta:
-    #     print a
+    #     print (a)
     #
     # phi = np.arange(0,2*math.pi,math.pi/100)
     # # r = 2 * pow(math.e, -((theta**4)/(0.25**2)))
@@ -128,7 +128,7 @@ def main():
     # y = r*np.outer(np.sin(phi), np.sin(theta))
     # z = r*np.outer(np.ones(phi.shape), np.cos(theta))
     #
-    # print np.shape(x), np.shape(y), np.shape(z)
+    # print (np.shape(x), np.shape(y), np.shape(z))
     #
     # ax.plot_surface(x,y,z)
     # ax.set_xlabel("X")
@@ -137,10 +137,10 @@ def main():
     #
     # p.show()
 
-    # print alphax
-    # print alphay
-    # print opt_val
-    # print result
+    # print (alphax)
+    # print (alphay)
+    # print (opt_val)
+    # print (result)
     # print ("time " + str(elapsed))
     #
     # max_rx = 0
@@ -155,9 +155,9 @@ def main():
     #             max_val = abs(temp)
     #             max_r = r
     # result = [i * max_r for i in range(0, 2 * n + 1)]
-    # print max_r
-    # print max_val
-    # print result
+    # print (max_r)
+    # print (max_val)
+    # print (result)
 
     # f2 = np.vectorize(fun)
     # fig = plt.figure()

@@ -24,9 +24,9 @@ def db (x):
 def main():
     t = time.time()
     global theta, d, n, k, b, alpha
-    # print cmath.cos(theta)
-    # print 2*math.cos(.5 * (k * d * math.cos(theta) + b))
-    # print get_array_factor(k, d, theta, n, alpha)
+    # print (cmath.cos(theta))
+    # print (2*math.cos(.5 * (k * d * math.cos(theta) + b)))
+    # print (get_array_factor(k, d, theta, n, alpha))
 
     max_r = float("-inf")
     max_val = float("-inf")
@@ -35,8 +35,8 @@ def main():
 
     for r in range(0, 361):
         temp = get_array_factor(k, d, theta, n, r)
-        # print temp.real
-        # print temp
+        # print (temp.real)
+        # print (temp)
         if abs(temp) > max_val:
             max_val = abs(temp)
             max_r = r
@@ -58,9 +58,9 @@ def main():
     result = [i * max_r for i in range(0, 2 * n + 1)]
     elapsed = time.time() - t
 
-    print max_r
-    print max_val
-    print result
+    print (max_r)
+    print (max_val)
+    print (result)
     print ("time " + str(elapsed))
 
     #

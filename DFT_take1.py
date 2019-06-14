@@ -49,7 +49,7 @@ def get_array_factor (theta, I_0, I_n):
 def main():
     global theta_n, x_n, N, M, AF
     sample_curve()
-    print len(theta_n)
+    print (len(theta_n))
 
     X_k = [0] * N
     for k in range(N):
@@ -57,7 +57,7 @@ def main():
         for n in range(N):
             sum += x_n[n] * cmath.exp((-2 * cmath.pi * 1j * (n-M) * k)/N)
         X_k[k] = sum
-    print X_k
+    print (X_k)
 
     x = [i for i in range(0,181)]
     y = [0] * 181
@@ -67,7 +67,7 @@ def main():
     # plt.plot(x, y, color='yellow')
     # plt.plot(theta_n, AF, color = 'red')
     theta_n.reverse()
-    print theta_n
+    print (theta_n)
     x1 = [i for i in range(181)]
     y1 = [0] * 181
     for i in x1:

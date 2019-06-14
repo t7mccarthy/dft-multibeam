@@ -34,9 +34,9 @@ def main():
     vector = [i * alpha for i in range(0, 2 * n + 1)]
     elapsed = time.time() - t
 
-    print alpha
-    print opt_val
-    print vector
+    print (alpha)
+    print (opt_val)
+    print (vector)
     print ("time " + str(elapsed))
 
 

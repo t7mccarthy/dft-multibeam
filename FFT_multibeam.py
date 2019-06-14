@@ -31,12 +31,9 @@ def peak_approximator():
     while curr_t >= 0:
         curr_d = targets[curr_t] - theta_n[i]
         if curr_d > 0:
-            if curr_d < abs(last_d):
-                x_n[i] = 2 * N / T
-                closest[curr_t] = theta_n[i]
-            else:
-                x_n[i - 1] = 2 * N / T
-                closest[curr_t] = theta_n[i-1]
+            ind = i - (curr_d > abs(last_d))
+            x_n[ind] = M / T
+            closest[curr_t] = theta_n[ind]
             curr_t -= 1
             curr_d = targets[curr_t] - theta_n[i]
         last_d = curr_d
@@ -68,27 +65,26 @@ def get_array_factor (theta):
     return sum
 
 # plot array factor function resulting from DFT
-def visualize ():
+def visualize (results):
     if show:
-        plt.plot(theta_n, x_n, color = 'red', marker = 'o', label = 'Target')
+        plt.plot(theta_n, x_n, color = 'green', marker = 'o', label = 'Target Function')
 
         y = [0] * 181
         for i in range(181):
             y[i] = abs(get_array_factor(math.radians(i)))
         plt.plot(range(181), y, color = 'blue', label = 'Result')
 
-        for target in targets:
-            plt.axvline(x=target, color = 'red')
+        plt.scatter(targets, results, color = 'orange', marker = '*', label = 'Target Angles', s = 100)
 
         plt.legend(loc='best', fontsize='small')
-        plt.title('DFT-Generated Beamform')
+        plt.title('FFT-Generated Beamform')
         plt.xlabel('Angle from Array (Degrees)')
         plt.ylabel('Array Factor')
         plt.show()
 
 
 def main():
-    print ('\nRUNNING DFT MULTIBEAM GENERATOR...\n')
+    print ('\nRUNNING FFT MULTIBEAM GENERATOR...\n')
 
     t = time.time()
     sample_angles()
@@ -116,13 +112,16 @@ def main():
     target_results = []
     for target in targets:
         target_results.append(abs(get_array_factor(math.radians(target))))
+    closest_peaks = []
+    for angle in closest:
+        closest_peaks.append(abs(get_array_factor(math.radians(angle))))
 
     # output results
     print ('\n\033[1m Resulting Beamform:\033[0m\n')
-    print ('--- Best uniform peak array factor: ' + str(2*N/T))
+    print ('--- Best uniform peak array factor: ' + str(M / T))
     print ('--- Runtime: ' + str(runtime) + ' seconds\n')
-    results = zip(*[[x + 1 for x in range(T)], targets, closest, target_results])
-    print (tabulate(results, headers=['Target #', 'Target Angle', 'Closest Sample', 'Array Factor'], tablefmt='orgtbl') + '\n')
+    results = zip(*[[x + 1 for x in range(T)], targets, closest, target_results, closest_peaks])
+    print (tabulate(results, headers=['Target #', 'Target Angle', 'Closest Sample', 'Array Factor', 'AF at Closest'], tablefmt='orgtbl') + '\n')
     diffs = [abs(targets[i] - closest[i]) for i in range(T)]
     print ('--- Mean difference target vs. closest: ' + str(sum(diffs)/T))
     print ('--- Max difference target vs. closest: ' + str(max(diffs)))
@@ -131,7 +130,7 @@ def main():
     print ('--- Min array factor at target: ' + str(min(target_results)) + '\n')
     print ('FINISHED\n')
 
-    visualize()
+    visualize(target_results)
 
 if __name__ == '__main__':
     main()

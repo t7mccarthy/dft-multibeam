@@ -19,7 +19,7 @@ closest = [0] * T
 show = True
 
 b_bound = 4
-t_bound = 32
+t_bound = 200
 dft_times = [0] * (t_bound - b_bound)
 fft_times = [0] * (t_bound - b_bound)
 
@@ -92,7 +92,7 @@ def main():
     global N, M, theta_n, x_n, X_k, closest
 
     for n in range(b_bound, t_bound):
-        # print n
+        # print (n)
         N = n
         M = N * 2 + 1
         theta_n = [0] * M
