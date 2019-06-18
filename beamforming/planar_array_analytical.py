@@ -16,7 +16,7 @@ lmbda = 5.168835482759
 k = 2 * math.pi / lmbda
 dx = lmbda / 3
 dy = lmbda / 3
-n = 8
+n = 4
 
 def get_array_factor (k, dx, dy, theta, phi, n, ax, ay):
     sum1 = 0
@@ -77,9 +77,9 @@ def main():
     # R = f2(THETA, PHI, k, dx, dy, n, alphax, alphay)
     print (np.shape(R))
     print (R)
-    X = R * np.sin(PHI) * np.cos(THETA)
-    Y = R * np.sin(PHI) * np.sin(THETA)
-    Z = R * np.cos(PHI)
+    X = R * np.sin(THETA) * np.cos(PHI)
+    Y = R * np.sin(THETA) * np.sin(PHI)
+    Z = R * np.cos(THETA)
     fig = plt.figure()
     ax = fig.add_subplot(1,1,1, projection='3d')
     plot = ax.plot_surface(X, Y, Z)
@@ -102,7 +102,7 @@ def main():
     x = [i for i in range(0,181)]
     y = [0] * 181
     for i in x:
-        y[i] = fun(math.radians(130), math.radians(i), k, dx, dy, n, alphax, alphay)
+        y[i] = fun(math.radians(30), math.radians(i), k, dx, dy, n, alphax, alphay)
 
     plt.plot(x, y)
     plt.title('uniform progressive phase factor: ' + str(alphay))
