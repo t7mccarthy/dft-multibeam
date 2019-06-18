@@ -9,14 +9,14 @@ import mpl_toolkits.mplot3d.axes3d as axes3d
 import time
 
 
-theta = math.radians(30)
-phi = math.radians(30)
+theta = math.radians(20)
+phi = math.radians(0)
 # wavelength for 5.8 GHz in cm
 lmbda = 5.168835482759
 k = 2 * math.pi / lmbda
 dx = lmbda / 3
 dy = lmbda / 3
-n = 4
+n = 10
 
 def get_array_factor (k, dx, dy, theta, phi, n, ax, ay):
     sum1 = 0
@@ -79,7 +79,7 @@ def main():
     print (R)
     X = R * np.sin(THETA) * np.cos(PHI)
     Y = R * np.sin(THETA) * np.sin(PHI)
-    Z = R * np.cos(THETA)
+    Z = abs(R * np.cos(THETA))
     fig = plt.figure()
     ax = fig.add_subplot(1,1,1, projection='3d')
     plot = ax.plot_surface(X, Y, Z)
