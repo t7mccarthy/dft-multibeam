@@ -15,10 +15,10 @@ m = 4
 N = n * 2 + 1
 M = m * 2 + 1
 lmbda = 5.168835482759
-dx = lmbda * 1.26
+dx = lmbda * 1.2
 dy = dx
 wave_num = 2 * math.pi / lmbda
-targets = [(60, 45)]
+targets = [(175, 45)]
 T = len(targets)
 theta_xy = [[0] * N for _ in range(M)]
 phi_xy = [[0] * N for _ in range(M)]
@@ -42,18 +42,22 @@ def sample_angles():
     print (a, b, frac)
     for x in range(M):
         for y in range(N):
-            # xm = x - m
-            # yn = y - n
-            root = math.sqrt(b2 * (x ** 2) + (a2 * (y ** 2)))
-            theta_xy[x][y] = math.degrees(math.asin(frac * root))
-            if y != 0:
-                phi_xy[x][y] = math.degrees(2 * (math.atan((1 / (a * y)) * (root - (b * x)))))
+            xm = x-m
+            yn = y-n
+            root = math.sqrt((b2 * (xm ** 2)) + (a2 * (yn ** 2)))
+            theta_xy[x][y] = math.degrees(-math.asin(frac * root)+math.pi)
+            if yn != 0:
+                phi_xy[x][y] = math.degrees(2 * math.atan((1 / (a * yn)) * (root - (b * xm))))
             angles[count] = (theta_xy[x][y], phi_xy[x][y])
             xy[count] = (x, y)
             count += 1
 
 def peak_approximator():
     global closest
+    # t = [(math.radians(a), math.radians(b)) for (a, b) in targets]
+    # print (targets)
+    # print (t)
+    # print (angles)
     TARGETS = np.array(targets)
     tree = KDTree(np.array(angles), leaf_size = 2)
     # print(TARGETS[:2])
@@ -76,12 +80,13 @@ def peak_approximator():
     # print (targets[0])
 
 def dft():
+    print (f_xy)
     for u in range(M):
         for v in range(N):
             sum = 0
-            for x in range(M):
-                for y in range(N):
-                        sum += f_xy[x][y] * cmath.exp(-2 * cmath.pi * 1j * ((u * x / M) + (v * y / N)))
+            for x in range(-m, m):
+                for y in range(-n, n):
+                        sum += f_xy[x+m][y+n] * cmath.exp(-2 * cmath.pi * 1j * ((u * x / M) + (v * y / N)))
             F_uv[u][v] = sum
 
 
@@ -108,8 +113,33 @@ def get_array_factor (theta, phi):
 def main():
     sample_angles()
     peak_approximator()
-    dft_fast()
+    dft()
     # print (F_uv)
+
+
+    fig = plt.figure()
+    ax = fig.add_subplot(1,1,1, projection='3d')
+
+    xs = []
+    ys = []
+    zs = []
+    R = 60
+    for pt in angles:
+        THETA = math.radians(pt[0])
+        PHI = math.radians(pt[1])
+        z = R * math.cos(THETA)
+        # if z >= 0:
+        xs.append(R * math.sin(THETA) * math.cos(PHI))
+        ys.append(R * math.sin(THETA) * math.sin(PHI))
+        zs.append(abs(R * math.cos(THETA)))
+
+    ax.scatter(xs, ys, zs, marker='o')
+
+    ax.set_xlabel('X Label')
+    ax.set_ylabel('Y Label')
+    ax.set_zlabel('Z Label')
+
+    plt.show()
 
     pts = []
 
@@ -118,16 +148,6 @@ def main():
         for b in range(M):
             pts.append((theta_xy[a][b], phi_xy[a][b]))
 
-    pts.append((30, 30))
-
-
-    plt.scatter([angles[15][0]], [angles[15][1]], marker='o', color = 'blue')
-    plt.scatter([30], [30], marker='s', color = 'yellow')
-    # print (pts == angles)
-    # plt.plot(range(M), theta_xy, color = 'red', marker = 'o', label = 'Theta samples')
-    # plt.plot(range(M), phi_xy, color = 'blue', marker = 'o', label = 'Phi samples')
-
-    # plt.legend(loc='best', fontsize='small')
     plt.title('Angle Samples')
     plt.xlabel('Theta')
     plt.ylabel('Phi')
@@ -153,7 +173,7 @@ def main():
     # print (R)
     X = R * np.sin(THETA) * np.cos(PHI)
     Y = R * np.sin(THETA) * np.sin(PHI)
-    Z = abs(R * np.cos(THETA))
+    Z = -abs(R * np.cos(THETA))
     fig = plt.figure()
     ax = fig.add_subplot(1,1,1, projection='3d')
     plot = ax.plot_surface(X, Y, Z)
