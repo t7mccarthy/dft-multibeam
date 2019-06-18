@@ -57,7 +57,7 @@ def sample_angles():
 
 def main():
     sample_angles()
-
+    print ("checking")
     t = theta_xy[7][8]
     p = phi_xy[7][8]
     # print(math.cos(0))
