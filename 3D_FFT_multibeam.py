@@ -10,15 +10,15 @@ import time
 from sklearn.neighbors import KDTree
 
 
-n = 4
-m = 4
+n = 10
+m = 10
 N = n * 2 + 1
 M = m * 2 + 1
 lmbda = 5.168835482759
-dx = lmbda * 1.2
+dx = lmbda * 0.5
 dy = dx
 wave_num = 2 * math.pi / lmbda
-targets = [(175, 45)]
+targets = [(175, 0), (160, 20)]
 T = len(targets)
 theta_xy = [[0] * N for _ in range(M)]
 phi_xy = [[0] * N for _ in range(M)]
@@ -45,7 +45,10 @@ def sample_angles():
             xm = x-m
             yn = y-n
             root = math.sqrt((b2 * (xm ** 2)) + (a2 * (yn ** 2)))
-            theta_xy[x][y] = math.degrees(-math.asin(frac * root)+math.pi)
+            try:
+                theta_xy[x][y] = math.degrees(-math.asin(frac * root)+math.pi)
+            except:
+                print ("bad")
             if yn != 0:
                 phi_xy[x][y] = math.degrees(2 * math.atan((1 / (a * yn)) * (root - (b * xm))))
             angles[count] = (theta_xy[x][y], phi_xy[x][y])
@@ -123,7 +126,7 @@ def main():
     xs = []
     ys = []
     zs = []
-    R = 60
+    R = 150
     for pt in angles:
         THETA = math.radians(pt[0])
         PHI = math.radians(pt[1])
@@ -208,7 +211,7 @@ def main():
     xs = []
     ys = []
     zs = []
-    R = 60
+    R = 30
     for pt in angles:
         THETA = math.radians(pt[0])
         PHI = math.radians(pt[1])
@@ -225,27 +228,28 @@ def main():
     ax.scatter(xs, ys, zs, marker='o')
     # ax.scatter([xs[15]], [ys[15]], [zs[15]], marker='s', color = 'yellow')
     # ax.scatter([xs[-1]], [ys[-1]], [zs[-1]], marker='s', color = 'red')
-    x1 = [0]
-    y1 = [0]
-    z1 = [0]
-    c = math.radians(targets[0][0])
-    d = math.radians(targets[0][1])
-    x1.append(2*R * math.sin(c) * math.cos(d))
-    y1.append(2*R * math.sin(c) * math.sin(d))
-    z1.append((2*R * math.cos(c)))
-    ax.plot(x1, y1, z1, marker='o')
+    for i in range(T):
+        x1 = [0]
+        y1 = [0]
+        z1 = [0]
+        c = math.radians(targets[i][0])
+        d = math.radians(targets[i][1])
+        x1.append(2*R * math.sin(c) * math.cos(d))
+        y1.append(2*R * math.sin(c) * math.sin(d))
+        z1.append((2*R * math.cos(c)))
+        ax.plot(x1, y1, z1, marker='o')
 
 
-    x2 = [0]
-    y3 = [0]
-    z4 = [0]
-    print(closest)
-    c = math.radians(closest[0][0])
-    d = math.radians(closest[0][1])
-    x2.append(2*R * math.sin(c) * math.cos(d))
-    y3.append(2*R * math.sin(c) * math.sin(d))
-    z4.append((2*R * math.cos(c)))
-    ax.plot(x2, y3, z4, marker='s')
+        x2 = [0]
+        y3 = [0]
+        z4 = [0]
+        print(closest)
+        c = math.radians(closest[i][0])
+        d = math.radians(closest[i][1])
+        x2.append(2*R * math.sin(c) * math.cos(d))
+        y3.append(2*R * math.sin(c) * math.sin(d))
+        z4.append((2*R * math.cos(c)))
+        ax.plot(x2, y3, z4, marker='s')
 
     ax.set_xlabel('X Label')
     ax.set_ylabel('Y Label')

@@ -15,7 +15,7 @@ m = 4
 N = n * 2 + 1
 M = m * 2 + 1
 lmbda = 5.168835482759
-dx = lmbda * 1.5
+dx = lmbda * 0.5
 dy = dx
 wave_num = 2 * math.pi / lmbda
 targets = [(20, -45)]
@@ -47,7 +47,10 @@ def sample_angles():
             root = math.sqrt((b2 * (xm ** 2)) + (a2 * (yn ** 2)))
             print (xm, yn)
             print (frac * root)
-            theta_xy[x][y] = -math.asin(frac * root)+math.pi
+            try:
+                theta_xy[x][y] = -math.asin(frac * root)+math.pi
+            except:
+                print("discarded")
             if yn != 0:
                 phi_xy[x][y] = 2 * math.atan((1 / (a * yn)) * (root - (b * xm)))
             angles[count] = (theta_xy[x][y], phi_xy[x][y])
