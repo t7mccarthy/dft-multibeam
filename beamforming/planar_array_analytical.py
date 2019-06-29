@@ -10,7 +10,7 @@ import time
 
 
 theta = math.radians(20)
-phi = math.radians(0)
+phi = math.radians(50)
 # wavelength for 5.8 GHz in cm
 lmbda = 5.168835482759
 k = 2 * math.pi / lmbda

@@ -4,19 +4,21 @@ import matplotlib.pyplot as plt
 import numpy as np
 from tabulate import tabulate
 import time
+from scipy.optimize import minimize
 
-N = 16
+N = 8
 M = N * 2 + 1
 lmbda = 5.168835482759
 d = lmbda / 2
 wave_num = 2 * math.pi / lmbda
-targets = [50, 65, 70, 100, 125]
+targets = [50, 100, 125, 150, 155]
 T = len(targets)
 theta_n = [0] * M
 x_n = [0] * M
 X_k = [0] * M
 closest = [0] * T
 show = True
+amps_phases = [0] * 2 * M
 
 # find set of angles possible to use in Fourier transform
 def sample_angles():
@@ -64,6 +66,39 @@ def get_array_factor (theta):
         sum += (X_k[n] / X_k[0]) * cmath.exp(1j * (n) * wave_num * d * math.cos(theta))
     return sum
 
+def get_phases_amps ():
+    # Calculate phase and amplitude of each antenna based on X_k signal
+    for i in range(M):
+        x = X_k[i].real
+        y = X_k[i].imag
+        phase = math.atan2(y, x)
+        amps_phases[2 * i + 1] = phase
+        amps_phases[2 * i] = x / math.cos(phase)
+
+
+def opt ():
+    global amps_phases, X_k
+    get_phases_amps()
+    guess = np.array(amps_phases[:])
+    # print(guess)
+    def get_AFS(S):
+        sum = 0
+        # print(S)
+        amps_phases = (S.tolist())[:]
+        for e in range(M):
+            X_k[e] = amps_phases[e * 2] * cmath.exp(1j * amps_phases[e * 2 + 1])
+        for t in targets:
+            sum += abs(get_array_factor(math.radians(t)))
+        return -sum
+    # function = lambda S: -1 * (get_AFS(S))
+    f = np.vectorize(get_AFS)
+    # print(get_AFS(guess))
+    result = minimize(get_AFS, guess)
+    # print(result.x)
+    get_AFS(result.x)
+
+
+
 # plot array factor function resulting from DFT
 def visualize (results):
     if show:
@@ -90,18 +125,25 @@ def main():
     sample_angles()
     peak_approximator()
     dft_fast()
+    # opt()
 
     runtime = time.time() - t
 
-    # Calculate phase and amplitude of each antenna based on X_k signal
+    # # Calculate phase and amplitude of each antenna based on X_k signal
+    # amplitudes = [0] * M
+    # phases = [0] * M
+    # for i in range(M):
+    #     x = X_k[i].real
+    #     y = X_k[i].imag
+    #     phase = math.atan2(y, x)
+    #     phases[i] = math.degrees(phase)
+    #     amplitudes[i] = x / math.cos(phase)
+    get_phases_amps()
     amplitudes = [0] * M
     phases = [0] * M
     for i in range(M):
-        x = X_k[i].real
-        y = X_k[i].imag
-        phase = math.atan2(y, x)
-        phases[i] = math.degrees(phase)
-        amplitudes[i] = x / math.cos(phase)
+        amplitudes[i] = amps_phases[2 * i]
+        phases[i] = math.degrees(amps_phases[2 * i + 1])
 
     # output antenna configurations
     print ('\n' + '\033[1m' + 'Required Antenna Configurations:' + '\033[0m\n')

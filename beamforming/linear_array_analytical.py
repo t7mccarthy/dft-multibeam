@@ -9,7 +9,7 @@ theta = math.radians(50)
 lmbda = 5.168835482759
 k = 2 * math.pi / lmbda
 d = lmbda / 2
-n = 20
+n = 10
 
 def get_array_factor (k, d, theta, n, alpha):
     sum = 0
