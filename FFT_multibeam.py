@@ -87,6 +87,7 @@ def opt ():
         amps_phases = (S.tolist())[:]
         for e in range(M):
             X_k[e] = amps_phases[e * 2] * cmath.exp(1j * amps_phases[e * 2 + 1])
+            # X_k[e] = cmath.exp(1j * amps_phases[e * 2 + 1])
         for t in targets:
             sum += abs(get_array_factor(math.radians(t)))
         return -sum
@@ -125,7 +126,11 @@ def main():
     sample_angles()
     peak_approximator()
     dft_fast()
-    # opt()
+
+    # get_phases_amps()
+    # for i in range(M):
+    #     X_k[i] = cmath.exp(1j * amps_phases[i * 2 + 1])
+    opt()
 
     runtime = time.time() - t
 
@@ -143,6 +148,7 @@ def main():
     phases = [0] * M
     for i in range(M):
         amplitudes[i] = amps_phases[2 * i]
+        # amplitudes[i] = 1
         phases[i] = math.degrees(amps_phases[2 * i + 1])
 
     # output antenna configurations
