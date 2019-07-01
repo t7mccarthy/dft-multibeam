@@ -11,16 +11,19 @@ lmbda = 5.168835482759
 d = lmbda / 2
 wave_num = 2 * math.pi / lmbda
 targets = [50, 65, 70, 100, 125]
+# if there is more than one target, FFT more efficient than hack method.
+targets = [50, 65]
 T = len(targets)
 theta_n = [0] * M
 x_n = [0] * M
 X_k = [0] * M
 closest = [0] * T
 show = True
-
+inds = [0] * T
 b_bound = 4
 t_bound = 200
 dft_times = [0] * (t_bound - b_bound)
+dft_hack_times = [0] * (t_bound - b_bound)
 fft_times = [0] * (t_bound - b_bound)
 
 # find set of angles possible to use in Fourier transform
@@ -36,12 +39,10 @@ def peak_approximator():
     while curr_t >= 0:
         curr_d = targets[curr_t] - theta_n[i]
         if curr_d > 0:
-            if curr_d < abs(last_d):
-                x_n[i] = 2 * N / T
-                closest[curr_t] = theta_n[i]
-            else:
-                x_n[i - 1] = 2 * N / T
-                closest[curr_t] = theta_n[i-1]
+            ind = i - (curr_d > abs(last_d))
+            x_n[ind] = M / T
+            inds[curr_t] = ind
+            closest[curr_t] = theta_n[ind]
             curr_t -= 1
             curr_d = targets[curr_t] - theta_n[i]
         last_d = curr_d
@@ -58,6 +59,14 @@ def dft():
 
     for k in range(M):
         X_k[k] = X_k[k] * cmath.exp(2 * cmath.pi * 1j * N * k / M)
+
+
+def dft_hack():
+    for k in range(M):
+        sum = 0
+        for i in inds:
+            sum += (M / T) * cmath.exp(-2 * cmath.pi * 1j * (i - N) * k / M)
+        X_k[k] = sum
 
 
 def dft_fast():
@@ -79,6 +88,7 @@ def visualize ():
     if show:
         x = [i * 2 + 1 for i in range(b_bound, t_bound)]
         plt.plot(x, dft_times, color = 'red', label = 'Naive')
+        plt.plot(x, dft_hack_times, color = 'orange', label = 'Hack')
         plt.plot(x, fft_times, color = 'blue', label = 'Fast')
 
         plt.legend(loc='best', fontsize='small')
@@ -106,6 +116,11 @@ def main():
         dft_times[n-b_bound] = time.time() - t
 
         t = time.time()
+        dft_hack()
+        dft_hack_times[n-b_bound] = time.time() - t
+
+        t = time.time()
+
         dft_fast()
         fft_times[n-b_bound] = time.time() - t
 
