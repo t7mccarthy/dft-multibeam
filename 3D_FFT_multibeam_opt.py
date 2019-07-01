@@ -8,10 +8,12 @@ from matplotlib import cm
 import mpl_toolkits.mplot3d.axes3d as axes3d
 import time
 from sklearn.neighbors import KDTree
+from scipy.optimize import minimize
 
 
-n = 4
-m = 4
+
+n = 3
+m = 3
 N = n * 2 + 1
 M = m * 2 + 1
 lmbda = 5.168835482759
@@ -29,6 +31,9 @@ f_xy = [[0] * N for _ in range(M)]
 F_uv = [[0] * N for _ in range(M)]
 closest = [0] * T
 dists = [0] * T
+inds = [[0] * N for _ in range(M)]
+phases = [0] * M * N
+
 
 # find set of angles possible to use in Fourier transform
 def sample_angles():
@@ -79,9 +84,14 @@ def dft_fast():
     global F_uv
     F_uv = (np.fft.fft2(np.array(f_xy))).tolist()
     k1 = cmath.exp(2 * cmath.pi * 1j * N / M)
+    ind = 0
     for u in range(M):
         for v in range(N):
             F_uv[u][v] = F_uv[u][v] * cmath.exp(2 * cmath.pi * 1j * ((u * m / M) + (v * n / N)))
+            phases[ind] = math.atan2(F_uv[u][v].imag, F_uv[u][v].real)
+            inds[u][v] = ind
+            F_uv[u][v] = cmath.exp(1j * phases[ind])
+            ind += 1
 
 
 def get_array_factor (theta, phi):
@@ -89,42 +99,24 @@ def get_array_factor (theta, phi):
     for u in range(M):
         for v in range(N):
             sum += (F_uv[u][v]/F_uv[0][0]) * cmath.exp(1j * wave_num * math.sin(theta) * (u * dx * math.cos(phi) + v * dy * math.sin(phi)))
-
     return abs(sum)
 
-def visualize():
-    # fig = plt.figure()
-    # ax = fig.add_subplot(1,1,1, projection='3d')
-    # xs = []
-    # ys = []
-    # zs = []
-    # R = 150
-    # for pt in angles:
-    #     THETA = math.radians(pt[0])
-    #     PHI = math.radians(pt[1])
-    #     z = R * math.cos(THETA)
-    #     # if z >= 0:
-    #     xs.append(R * math.sin(THETA) * math.cos(PHI))
-    #     ys.append(R * math.sin(THETA) * math.sin(PHI))
-    #     zs.append(abs(R * math.cos(THETA)))
-    # ax.scatter(xs, ys, zs, marker='o')
-    # ax.set_xlabel('X Label')
-    # ax.set_ylabel('Y Label')
-    # ax.set_zlabel('Z Label')
-    #
-    # plt.show()
-    #
-    # pts = []
-    # for a in range(M):
-    #     plt.scatter(theta_xy[a], phi_xy[a], color = 'red', marker = 'o')
-    #     for b in range(M):
-    #         pts.append((theta_xy[a][b], phi_xy[a][b]))
-    # plt.title('Angle Samples')
-    # plt.xlabel('Theta')
-    # plt.ylabel('Phi')
-    # plt.show()
 
-    # f2 = np.vectorize(get_array_factor)
+def opt ():
+    global phases, F_uv
+    guess = np.array(phases[:])
+    def get_AFS(S):
+        sum = 0
+        phases = (S.tolist())[:]
+        for u in range(M):
+            for v in range(N):
+                F_uv[u][v] = cmath.exp(1j * phases[inds[u][v]])
+        for t in targets:
+            sum += abs(get_array_factor(math.radians(t[0]), math.radians(t[1])))
+        return -sum
+    get_AFS(minimize(get_AFS, guess).x)
+
+def visualize():
     dim = 100
     theta, phi = np.linspace(0, np.pi, dim), np.linspace(0, 2 * np.pi, dim)
     THETA, PHI = np.meshgrid(theta, phi)
@@ -185,6 +177,7 @@ def main():
     sample_angles()
     peak_approximator()
     dft_fast()
+    opt()
     runtime = time.time() - t
 
     # Calculate phase and amplitude of each antenna based on X_k signal
