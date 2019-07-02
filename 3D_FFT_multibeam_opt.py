@@ -12,8 +12,8 @@ from scipy.optimize import minimize
 
 
 
-n = 3
-m = 3
+n = 5
+m = 5
 N = n * 2 + 1
 M = m * 2 + 1
 lmbda = 5.168835482759
@@ -33,12 +33,14 @@ closest = [0] * T
 dists = [0] * T
 inds = [[0] * N for _ in range(M)]
 phases = [0] * M * N
+a = M * dx / lmbda
+b = N * dy / lmbda
 
 
 # find set of angles possible to use in Fourier transform
 def sample_angles():
-    a = M * dx / lmbda
-    b = N * dy / lmbda
+    # a = M * dx / lmbda
+    # b = N * dy / lmbda
     a2 = a ** 2
     b2 = b ** 2
     frac = 1 / (a * b)
@@ -102,6 +104,15 @@ def get_array_factor (theta, phi):
     return abs(sum)
 
 
+# def get_af_ifft (theta, phi):
+#     p = a * math.sin(theta) * math.cos(phi)
+#     q = b * math.sin(theta) * math.sin(phi)
+#     f = (np.fft.ifft2(np.array(F_uv))).tolist()
+#     print (p, q)
+#     print (f)
+#     print (f[p][q])
+    # return N * M * f[p][q]
+
 def opt ():
     global phases, F_uv
     guess = np.array(phases[:])
@@ -134,7 +145,8 @@ def visualize():
     xs = []
     ys = []
     zs = []
-    R = 0.75 * M * N / T
+    # R = 0.75 * M * N / T
+    R =  1.25 * M * N / T
     for pt in angles:
         THETA = math.radians(pt[0])
         PHI = math.radians(pt[1])
@@ -221,8 +233,6 @@ def main():
     print ('FINISHED\n')
 
     visualize()
-
-
 
 
 if __name__ == '__main__':

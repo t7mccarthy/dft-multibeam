@@ -10,8 +10,8 @@ import time
 from sklearn.neighbors import KDTree
 
 
-n = 4
-m = 4
+n = 3
+m = 3
 N = n * 2 + 1
 M = m * 2 + 1
 lmbda = 5.168835482759
