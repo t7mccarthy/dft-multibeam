@@ -21,18 +21,18 @@ dx = lmbda * 0.5
 dy = dx
 wave_num = 2 * math.pi / lmbda
 targets = [(30, 70), (40, -40), (10, 0), (60, 180)]
-targets = np.array([(180 - x, y) for (x, y) in targets])
+targets = [(180 - x, y) for (x, y) in targets]
 T = len(targets)
-theta_xy = np.zeros((M, N))
-phi_xy = np.zeros((M, N))
-angles = np.zeros(M * N, dtype=(float,2))
-xy = np.zeros(M * N, dtype=(int,2))
-f_xy = np.zeros((M, N))
-F_uv = np.zeros((M, N))
-closest = np.zeros(T)
-dists = np.zeros(T)
-inds = np.zeros((M, N), dtype=(int))
-phases = np.zeros(M * N)
+theta_xy = [[0] * N for _ in range(M)]
+phi_xy = [[0] * N for _ in range(M)]
+angles = [0] * (M * N)
+xy = [0] * (M * N)
+f_xy = [[0] * N for _ in range(M)]
+F_uv = [[0] * N for _ in range(M)]
+closest = [0] * T
+dists = [0] * T
+inds = [[0] * N for _ in range(M)]
+phases = [0] * M * N
 
 
 # find set of angles possible to use in Fourier transform
@@ -60,13 +60,14 @@ def sample_angles():
 
 def peak_approximator():
     global closest, dists
-    tree = KDTree(angles, leaf_size = 2)
-    dist, ind = tree.query(targets, k = 1)
+    TARGETS = np.array(targets)
+    tree = KDTree(np.array(angles), leaf_size = 2)
+    dist, ind = tree.query(TARGETS, k = 1)
     for i in ind:
-        x, y = xy[i][0]
+        x, y = xy[i[0]]
         f_xy[x][y] = (m * n / T) * M * N
-    dists = np.array([d[0] for d in dist])
-    closest = np.array([angles[i[0]] for i in ind])
+    dists = [d[0] for d in dist]
+    closest = [angles[i[0]] for i in ind]
     i = ind[0][0]
 
 def dft():
@@ -80,26 +81,6 @@ def dft():
 
 
 def dft_fast():
-    global F_uv, inds
-    F_uv = np.fft.fft2(f_xy)
-
-    coeffs = np.zeros((M, N), dtype = 'complex')
-    def get_coeff(v, u):
-        return cmath.exp(2 * cmath.pi * 1j * ((u * m / M) + (v * n / N)))
-
-    vcoeffs = np.vectorize(get_coeff)
-
-    for u in range(N):
-        coeffs[u] = vcoeffs(np.arange(N), u)
-
-    temp = np.multiply(coeffs, F_uv)
-    phases = np.arctan2(temp.imag, temp.real)
-    F_uv = np.exp(1j * phases)
-    phases = np.reshape(phases, M * N)
-    inds = np.reshape(np.arange(M * N), (M, N))
-
-
-def dft_fast_old():
     global F_uv
     F_uv = (np.fft.fft2(np.array(f_xy))).tolist()
     k1 = cmath.exp(2 * cmath.pi * 1j * N / M)
@@ -113,7 +94,14 @@ def dft_fast_old():
             ind += 1
 
 
-# TODO: Clean this up, get rid of try except, make nice
+def get_array_factor (theta, phi):
+    sum = 0
+    for u in range(M):
+        for v in range(N):
+            sum += (F_uv[u][v]/F_uv[0][0]) * cmath.exp(1j * wave_num * math.sin(theta) * (u * dx * math.cos(phi) + v * dy * math.sin(phi)))
+    return abs(sum)
+
+
 targ_coeffs = [False] * T
 def get_array_factor_opt (theta, phi, i):
     global targ_coeffs
@@ -127,59 +115,22 @@ def get_array_factor_opt (theta, phi, i):
         for u in range(N):
             coeffs[u] = vcoeffs(np.arange(N), u)
         targ_coeffs[i] = np.copy(coeffs)
-    return abs(np.sum(np.multiply(F_uv / F_uv[0][0], targ_coeffs[i])))
-
-
-
-def get_array_factor_old (theta, phi):
-    sum = 0
-    for u in range(M):
-        for v in range(N):
-            sum += (F_uv[u][v]/F_uv[0][0]) * cmath.exp(1j * wave_num * math.sin(theta) * (u * dx * math.cos(phi) + v * dy * math.sin(phi)))
-    return abs(sum)
-
+    return abs(np.sum(np.multiply(np.array(F_uv) / F_uv[0][0], targ_coeffs[i])))
 
 
 def opt ():
     global phases, F_uv
-    guess = np.copy(phases)
+    guess = np.array(phases[:])
     def get_AFS(S):
         global F_uv
         sum = 0
-        phases = np.copy(S)
+        phases = (S.tolist())[:]
+        F_uv = (np.exp(1j * np.reshape(S, (M, N)))).tolist()
 
-        F_uv = np.exp(1j * np.reshape(phases, (M, N)))
-        #
-        # for u in range(M):
-        #     for v in range(N):
-        #         F_uv[u][v] = cmath.exp(1j * phases[inds[u][v]])
-
-        # print(temp == F_uv)
-        # F_uv = np.copy(temp)
         for t in range(T):
-            # sum += abs(get_array_factor(math.radians(t[0]), math.radians(t[1])))
-            sum += abs(get_array_factor_opt(math.radians(targets[t][0]), math.radians(targets[t][1]), t))
+            sum += abs(get_array_factor(math.radians(targets[t][0]), math.radians(targets[t][1])))
         return -sum
     get_AFS(minimize(get_AFS, guess).x)
-
-
-def opt_old ():
-    global phases, F_uv
-    guess = np.copy(phases)
-    def get_AFS(S):
-        sum = 0
-        phases = np.copy(S)
-        for u in range(M):
-            for v in range(N):
-                F_uv[u][v] = cmath.exp(1j * phases[inds[u][v]])
-        for t in targets:
-            sum += abs(get_array_factor(math.radians(t[0]), math.radians(t[1])))
-        return -sum
-    get_AFS(minimize(get_AFS, guess).x)
-
-
-
-
 
 def visualize():
     dim = 100
@@ -237,31 +188,15 @@ def visualize():
 
 
 def main():
-
-    # sample_angles()
-    # peak_approximator()
-    #
-    # t = time.time()
-    # dft_fast()
-    # print(time.time() - t)
-    #
-    # t = time.time()
-    # dft_fast_old()
-    # print(time.time() - t)
-
-    #
-    # opt()
-    # runtime = time.time() - t
-
     print ('\nRUNNING FFT MULTIBEAM GENERATOR...\n')
 
     # t = time.time()
     # sample_angles()
     # peak_approximator()
     # print(time.time() - t)
-    # t = time.time()
-    # dft_fast_old()
-    # print(time.time() - t)
+    # # t = time.time()
+    # # dft_fast_old()
+    # # print(time.time() - t)
     # t = time.time()
     # dft_fast()
     # print(time.time() - t)
@@ -270,11 +205,10 @@ def main():
     # print(time.time() - t)
     # runtime = time.time() - t
 
-
     t = time.time()
     sample_angles()
     peak_approximator()
-    dft_fast_old()
+    dft_fast()
     opt()
     runtime = time.time() - t
 
@@ -299,10 +233,10 @@ def main():
     # get array factor at each target angle
     target_results = []
     for target in targets:
-        target_results.append(abs(get_array_factor_old(math.radians(target[0]), math.radians(target[1]))))
+        target_results.append(abs(get_array_factor(math.radians(target[0]), math.radians(target[1]))))
     closest_peaks = []
     for angle in closest:
-        closest_peaks.append(abs(get_array_factor_old(math.radians(angle[0]), math.radians(angle[1]))))
+        closest_peaks.append(abs(get_array_factor(math.radians(angle[0]), math.radians(angle[1]))))
     # output results
     print ('\n\033[1m Resulting Beamform:\033[0m\n')
     print ('--- Best uniform peak array factor: ' + str(M * N / T))
@@ -318,7 +252,9 @@ def main():
     print ('--- Min array factor at target: ' + str(min(target_results)) + '\n')
     print ('FINISHED\n')
 
-    # visualize()
+    visualize()
+
+
 
 
 if __name__ == '__main__':
