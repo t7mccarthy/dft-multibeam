@@ -11,10 +11,11 @@ from tabulate import tabulate
 import time
 
 
-n = 2
+# m = antennas in x-direction, n = antennas in y direction
 m = 2
-N = n * 2 + 1
+n = 2
 M = m * 2 + 1
+N = n * 2 + 1
 lmbda = 5.168835482759
 dx = lmbda * 0.5
 dy = dx
@@ -28,8 +29,6 @@ angles = np.zeros(M * N, dtype=(float,2))
 xy = np.zeros(M * N, dtype=(int,2))
 f_xy = np.zeros((M, N))
 F_uv = np.zeros((M, N))
-closest = np.zeros(T)
-dists = np.zeros(T)
 phases = np.zeros(M * N)
 targ_coeffs = [0] * T
 
@@ -59,14 +58,11 @@ def sample_angles():
 
 # Find closest sample angles to targets (to create target function for FFT)
 def peak_approximator():
-    global closest, dists
     tree = KDTree(angles, leaf_size = 2)
     dist, ind = tree.query(targets, k = 1)
     for i in ind:
         x, y = xy[i][0]
         f_xy[x][y] = (m * n / T) * M * N
-    dists = np.array([d[0] for d in dist])
-    closest = np.array([angles[i[0]] for i in ind])
 
 # Run FFT to get phases/amplitudes for approximating target function
 def dft_fast():
@@ -115,7 +111,7 @@ def get_array_factor (theta, phi):
             sum += (F_uv[u][v]/F_uv[0][0]) * c.exp(1j * wave_num * sin(theta) * (u * dx * cos(phi) + v * dy * sin(phi)))
     return abs(sum)
 
-
+# Create 3D visualization of array factor
 def visualize():
     dim = 100
     theta, phi = np.linspace(0, np.pi, dim), np.linspace(0, 2 * np.pi, dim)
@@ -146,9 +142,7 @@ def visualize():
     plt.show()
 
 
-
 def main():
-    global phases
     print ('\nRUNNING FFT MULTIBEAM GENERATOR...\n')
     t = time.time()
     sample_angles()
