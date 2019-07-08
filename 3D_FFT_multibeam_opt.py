@@ -131,38 +131,15 @@ def visualize():
     fig = plt.figure()
     ax = fig.add_subplot(1,1,1, projection='3d')
     plot = ax.plot_surface(X, Y, Z)
-    # xs = []
-    # ys = []
-    # zs = []
     R =  1.5 * M * N / T
-    # for pt in angles:
-    #     THETA = radians(pt[0])
-    #     PHI = radians(pt[1])
-    #     z = -R * cos(THETA)
-    #     if z >= 0:
-    #         xs.append(R * sin(THETA) * cos(PHI))
-    #         ys.append(R * sin(THETA) * sin(PHI))
-    #         zs.append(z)
-    # ax.scatter(xs, ys, zs, marker='o')
     for i in range(T):
-        x1 = [0]
-        y1 = [0]
-        z1 = [0]
+        x, y, z = [0], [0], [0]
         theta = radians(targets[i][0])
         phi = radians(targets[i][1])
-        x1.append(2 * R * sin(theta) * cos(phi))
-        y1.append(2 * R * sin(theta) * sin(phi))
-        z1.append((-2 * R * cos(theta)))
-        ax.plot(x1, y1, z1, marker='o')
-        # x2 = [0]
-        # y3 = [0]
-        # z4 = [0]
-        # theta_c = radians(closest[i][0])
-        # phi_c = radians(closest[i][1])
-        # x2.append(2*R * sin(theta_c) * cos(phi_c))
-        # y3.append(2*R * sin(theta_c) * sin(phi_c))
-        # z4.append((-2*R * cos(theta_c)))
-        # ax.plot(x2, y3, z4, marker='s')
+        x.append(2 * R * sin(theta) * cos(phi))
+        y.append(2 * R * sin(theta) * sin(phi))
+        z.append((-2 * R * cos(theta)))
+        ax.plot(x, y, z, marker='o')
     ax.set_xlabel('X')
     ax.set_ylabel('Y')
     ax.set_zlabel('Z')
@@ -171,7 +148,7 @@ def visualize():
 
 
 def main():
-
+    global phases
     print ('\nRUNNING FFT MULTIBEAM GENERATOR...\n')
     t = time.time()
     sample_angles()
@@ -202,19 +179,14 @@ def main():
     target_results = []
     for target in targets:
         target_results.append(abs(get_array_factor(radians(target[0]), radians(target[1]))))
-    closest_peaks = []
-    for angle in closest:
-        closest_peaks.append(abs(get_array_factor(radians(angle[0]), radians(angle[1]))))
+
     # output results
     print ('\n\033[1m Resulting Beamform:\033[0m\n')
-    print ('--- Best uniform peak array factor: ' + str(M * N / T))
+    print ('--- Uniform peak array factor (antennas/targets): ' + str(M * N / T))
     print ('--- Runtime: ' + str(runtime) + ' seconds\n')
     targets_out = [(180 - x[0], x[1]) for x in targets]
-    closest_out = [(180 - x[0], x[1]) for x in closest]
-    results = zip(*[[x + 1 for x in range(T)], targets_out, closest_out, target_results, closest_peaks])
-    print (tabulate(results, headers=['Target #', 'Target Angle', 'Closest Sample', 'Array Factor', 'AF at Closest'], tablefmt='orgtbl') + '\n')
-    print ('--- Mean difference target vs. closest: ' + str(sum(dists)/T))
-    print ('--- Max difference target vs. closest: ' + str(max(dists)))
+    results = zip(*[[x + 1 for x in range(T)], targets_out, target_results])
+    print (tabulate(results, headers=['Target #', 'Target Angle', 'Array Factor'], tablefmt='orgtbl') + '\n')
     print ('--- Mean array factor at target: ' + str(sum(target_results)/T))
     print ('--- Max array factor at target: ' + str(max(target_results)))
     print ('--- Min array factor at target: ' + str(min(target_results)) + '\n')
