@@ -1,15 +1,14 @@
-import cmath
-import math
+import cmath as c
+from math import pi, sqrt, degrees, radians, sin, cos, asin, atan, atan2
 import matplotlib.pyplot as plt
-import numpy as np
-from tabulate import tabulate
-import pylab as p
 from matplotlib import cm
 import mpl_toolkits.mplot3d.axes3d as axes3d
-import time
-from sklearn.neighbors import KDTree
+import numpy as np
+import pylab as p
 from scipy.optimize import minimize
-
+from sklearn.neighbors import KDTree
+from tabulate import tabulate
+import time
 
 
 n = 2
@@ -19,7 +18,7 @@ M = m * 2 + 1
 lmbda = 5.168835482759
 dx = lmbda * 0.5
 dy = dx
-wave_num = 2 * math.pi / lmbda
+wave_num = 2 * pi / lmbda
 targets = [(30, 70), (40, -40), (10, 0), (60, 180)]
 targets = np.array([(180 - x, y) for (x, y) in targets])
 T = len(targets)
@@ -31,11 +30,11 @@ f_xy = np.zeros((M, N))
 F_uv = np.zeros((M, N))
 closest = np.zeros(T)
 dists = np.zeros(T)
-inds = np.zeros((M, N), dtype=(int))
 phases = np.zeros(M * N)
+targ_coeffs = [0] * T
 
 
-# find set of angles possible to use in Fourier transform
+# Find set of angles possible to use in Fourier transform
 def sample_angles():
     a = M * dx / lmbda
     b = N * dy / lmbda
@@ -47,17 +46,18 @@ def sample_angles():
         for y in range(N):
             xm = x-m
             yn = y-n
-            root = math.sqrt((b2 * (xm ** 2)) + (a2 * (yn ** 2)))
+            root = sqrt((b2 * (xm ** 2)) + (a2 * (yn ** 2)))
             try:
-                theta_xy[x][y] = math.degrees(-math.asin(frac * root)+math.pi)
+                theta_xy[x][y] = degrees(-asin(frac * root)+pi)
             except:
                 pass
             if yn != 0:
-                phi_xy[x][y] = math.degrees(2 * math.atan((1 / (a * yn)) * (root - (b * xm))))
+                phi_xy[x][y] = degrees(2 * atan((1 / (a * yn)) * (root - (b * xm))))
             angles[count] = (theta_xy[x][y], phi_xy[x][y])
             xy[count] = (x, y)
             count += 1
 
+# Find closest sample angles to targets (to create target function for FFT)
 def peak_approximator():
     global closest, dists
     tree = KDTree(angles, leaf_size = 2)
@@ -67,45 +67,33 @@ def peak_approximator():
         f_xy[x][y] = (m * n / T) * M * N
     dists = np.array([d[0] for d in dist])
     closest = np.array([angles[i[0]] for i in ind])
-    i = ind[0][0]
 
-
-def dft_fast_old():
+# Run FFT to get phases/amplitudes for approximating target function
+def dft_fast():
     global F_uv
-    F_uv = (np.fft.fft2(np.array(f_xy))).tolist()
+    F_uv = np.fft.fft2(f_xy)
     ind = 0
     for u in range(M):
         for v in range(N):
-            F_uv[u][v] = F_uv[u][v] * cmath.exp(2 * cmath.pi * 1j * ((u * m / M) + (v * n / N)))
-            phases[ind] = math.atan2(F_uv[u][v].imag, F_uv[u][v].real)
-            inds[u][v] = ind
-            F_uv[u][v] = cmath.exp(1j * phases[ind])
+            F_uv[u][v] = F_uv[u][v] * c.exp(2 * c.pi * 1j * ((u * m / M) + (v * n / N)))
+            phases[ind] = atan2(F_uv[u][v].imag, F_uv[u][v].real)
+            F_uv[u][v] = c.exp(1j * phases[ind])
             ind += 1
 
-
-# TODO: Clean this up, get rid of try except, make nice
-targ_coeffs = [False] * T
+# Calculate AF at targets (won't recalculate coefficient vector); used during optimization
 def get_array_factor_opt (theta, phi, i):
     try: targ_coeffs[i].any()
     except:
         coeffs = np.zeros((M, N), dtype = 'complex')
         def get_coeff(v, u):
-            return cmath.exp(1j * wave_num * math.sin(theta) * (u * dx * math.cos(phi) + v * dy * math.sin(phi)))
+            return c.exp(1j * wave_num * sin(theta) * (u * dx * cos(phi) + v * dy * sin(phi)))
         vcoeffs = np.vectorize(get_coeff)
         for u in range(N):
             coeffs[u] = vcoeffs(np.arange(N), u)
         targ_coeffs[i] = np.copy(coeffs)
     return abs(np.sum(np.multiply(F_uv / F_uv[0][0], targ_coeffs[i])))
 
-
-def get_array_factor_old (theta, phi):
-    sum = 0
-    for u in range(M):
-        for v in range(N):
-            sum += (F_uv[u][v]/F_uv[0][0]) * cmath.exp(1j * wave_num * math.sin(theta) * (u * dx * math.cos(phi) + v * dy * math.sin(phi)))
-    return abs(sum)
-
-
+# Maximize total AF at targets by running scipy minimization alg (BFGS)
 def opt ():
     global phases, F_uv
     guess = np.copy(phases)
@@ -115,10 +103,17 @@ def opt ():
         phases = np.copy(S)
         F_uv = np.exp(1j * np.reshape(phases, (M, N)))
         for t in range(T):
-            sum += abs(get_array_factor_opt(math.radians(targets[t][0]), math.radians(targets[t][1]), t))
+            sum += abs(get_array_factor_opt(radians(targets[t][0]), radians(targets[t][1]), t))
         return -sum
     get_AFS(minimize(get_AFS, guess).x)
 
+# Calculate AF at any angle (used during visualization and analysis)
+def get_array_factor (theta, phi):
+    sum = 0
+    for u in range(M):
+        for v in range(N):
+            sum += (F_uv[u][v]/F_uv[0][0]) * c.exp(1j * wave_num * sin(theta) * (u * dx * cos(phi) + v * dy * sin(phi)))
+    return abs(sum)
 
 
 def visualize():
@@ -136,39 +131,38 @@ def visualize():
     fig = plt.figure()
     ax = fig.add_subplot(1,1,1, projection='3d')
     plot = ax.plot_surface(X, Y, Z)
-    xs = []
-    ys = []
-    zs = []
-    # R = 0.75 * M * N / T
-    R =  1.25 * M * N / T
-    for pt in angles:
-        THETA = math.radians(pt[0])
-        PHI = math.radians(pt[1])
-        z = -R * math.cos(THETA)
-        if z >= 0:
-            xs.append(R * math.sin(THETA) * math.cos(PHI))
-            ys.append(R * math.sin(THETA) * math.sin(PHI))
-            zs.append(z)
-    ax.scatter(xs, ys, zs, marker='o')
+    # xs = []
+    # ys = []
+    # zs = []
+    R =  1.5 * M * N / T
+    # for pt in angles:
+    #     THETA = radians(pt[0])
+    #     PHI = radians(pt[1])
+    #     z = -R * cos(THETA)
+    #     if z >= 0:
+    #         xs.append(R * sin(THETA) * cos(PHI))
+    #         ys.append(R * sin(THETA) * sin(PHI))
+    #         zs.append(z)
+    # ax.scatter(xs, ys, zs, marker='o')
     for i in range(T):
         x1 = [0]
         y1 = [0]
         z1 = [0]
-        c = math.radians(targets[i][0])
-        d = math.radians(targets[i][1])
-        x1.append(2*R * math.sin(c) * math.cos(d))
-        y1.append(2*R * math.sin(c) * math.sin(d))
-        z1.append((-2*R * math.cos(c)))
+        theta = radians(targets[i][0])
+        phi = radians(targets[i][1])
+        x1.append(2 * R * sin(theta) * cos(phi))
+        y1.append(2 * R * sin(theta) * sin(phi))
+        z1.append((-2 * R * cos(theta)))
         ax.plot(x1, y1, z1, marker='o')
-        x2 = [0]
-        y3 = [0]
-        z4 = [0]
-        c = math.radians(closest[i][0])
-        d = math.radians(closest[i][1])
-        x2.append(2*R * math.sin(c) * math.cos(d))
-        y3.append(2*R * math.sin(c) * math.sin(d))
-        z4.append((-2*R * math.cos(c)))
-        ax.plot(x2, y3, z4, marker='s')
+        # x2 = [0]
+        # y3 = [0]
+        # z4 = [0]
+        # theta_c = radians(closest[i][0])
+        # phi_c = radians(closest[i][1])
+        # x2.append(2*R * sin(theta_c) * cos(phi_c))
+        # y3.append(2*R * sin(theta_c) * sin(phi_c))
+        # z4.append((-2*R * cos(theta_c)))
+        # ax.plot(x2, y3, z4, marker='s')
     ax.set_xlabel('X')
     ax.set_ylabel('Y')
     ax.set_zlabel('Z')
@@ -182,11 +176,11 @@ def main():
     t = time.time()
     sample_angles()
     peak_approximator()
-    dft_fast_old()
+    dft_fast()
     opt()
     runtime = time.time() - t
 
-    # Calculate phase and amplitude of each antenna based on X_k signal
+    # Calculate phase and amplitude of each antenna based on F_uv signal
     amplitudes = [0] * M * N
     phases = [0] * M * N
     count = 0
@@ -194,9 +188,9 @@ def main():
         for i in range(M):
             x = F_uv[i][j].real
             y = F_uv[i][j].imag
-            phase = math.atan2(y, x)
-            phases[count] = math.degrees(phase)
-            amplitudes[count] = x / math.cos(phase)
+            phase = atan2(y, x)
+            phases[count] = degrees(phase)
+            amplitudes[count] = x / cos(phase)
             count += 1
 
     # output antenna configurations
@@ -207,10 +201,10 @@ def main():
     # get array factor at each target angle
     target_results = []
     for target in targets:
-        target_results.append(abs(get_array_factor_old(math.radians(target[0]), math.radians(target[1]))))
+        target_results.append(abs(get_array_factor(radians(target[0]), radians(target[1]))))
     closest_peaks = []
     for angle in closest:
-        closest_peaks.append(abs(get_array_factor_old(math.radians(angle[0]), math.radians(angle[1]))))
+        closest_peaks.append(abs(get_array_factor(radians(angle[0]), radians(angle[1]))))
     # output results
     print ('\n\033[1m Resulting Beamform:\033[0m\n')
     print ('--- Best uniform peak array factor: ' + str(M * N / T))
@@ -226,7 +220,7 @@ def main():
     print ('--- Min array factor at target: ' + str(min(target_results)) + '\n')
     print ('FINISHED\n')
 
-    # visualize()
+    visualize()
 
 
 if __name__ == '__main__':
